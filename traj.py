@@ -17,6 +17,7 @@ def fx(xlist,m,c):
         zcod.append(2)       
     return xcod,ycod,zcod
 
+#segment the start to end point into 15 points
 xlist = linspace(x1,x2,15)
 m  = (y2-y1)/(x2-x1)      
 c = y2 - m*x2
