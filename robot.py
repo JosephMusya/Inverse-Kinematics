@@ -1,5 +1,4 @@
 from numpy import * #Import numerical python numpy (Math Library)
-import warnings
 class kinematics():
     def __init__(self,a1,a2,a3,a4):
         self.a1 = a1 #Link 1 length
