@@ -4,13 +4,6 @@ import sys
 import threading as t
 import time
 
-H0_6 = [ #Orientation of the end effector
-    [0,1,0,0],
-    [0,0,1,0],
-    [1,0,0,0],
-    [0,0,0,1]
-]
-
 class Move(t.Thread):
     #Initialize the threading process
     def __init__(self,name,qo,qf,tf):
@@ -108,7 +101,7 @@ class trajectory_planner():
         return th1,th2,th3,th4,th5
 
     #Get the first angle and the last angle for the joints
-    def getAngles(self):
+    def getAngles(self,H0_6):
         qo,qf = [],[]
         #Returns the joint angles
         th1,th2,th3 = my_robot.ikine(self.x1,self.y1,self.z1) #Returns theta1,theta2,theta3
@@ -137,11 +130,11 @@ class trajectory_planner():
             print("Drop")
 
 my_robot = kinematics(a1=2,a2=2,a3=6,a4=3) #Arguments are link1,link2,link3,link4
-def goTo(HOME_POS,TARGET,tf):
+def goTo(HOME_POS,TARGET,tf,H0_6):
     main = trajectory_planner(HOME_POS[0],HOME_POS[1],HOME_POS[2],
                       TARGET[0],TARGET[1],TARGET[2]) #arguments are the intial position and the endeffector position
 
-    qo,qf = main.getAngles()
+    qo,qf = main.getAngles(H0_6)
     
     #Lock all the threads in join movement occur synchronously
     global t_lock
