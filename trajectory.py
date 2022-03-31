@@ -15,7 +15,7 @@ class Move(t.Thread):
 
     #What happens when the thread is called
     def run(self):
-        t_lock.acquire()
+        #t_lock.acquire()
         qdd_p = 4*(self.qf-self.qo)/pow(self.tf,2)
         x = round((pow(qdd_p,2)*pow(self.tf,2)),3)
         y = round((4*qdd_p*(self.qf-self.qo)),3)
@@ -23,8 +23,8 @@ class Move(t.Thread):
         tb = (0.5*self.tf) - (num)/(2*qdd_p)
         qb_p = self.qo + (0.5*qdd_p*pow(tb,2))
 
-        sec = linspace(0,self.tf,10)
-        delay = self.tf/(len(sec))
+        sec = linspace(0,self.tf,100)
+        delay = self.tf/(len(sec))*0.95
 
         start = time.time()
         #calculating each joint's velocity and acceleration at each instance of time
@@ -46,11 +46,6 @@ class Move(t.Thread):
             time.sleep(delay)
         stop = time.time()
         exe_t = stop-start
-
-        print("Execution Time: ",exe_t)
-        t_lock.release()
-        #print("Velocity: ", vel)
-        #print("Acceleration: ", acc)
 
 #Generates a path to be followed by the robot
 class trajectory_planner():
@@ -119,44 +114,62 @@ class trajectory_planner():
         qf.append(th1),qf.append(th2),qf.append(th3),qf.append(th4),qf.append(th5)
         return qo,qf
 
-    #Command for the gripper to either grasp or release the object
-    def gripper(self, process,flag=0): #0 > gripper, 1 > Grab
-        for p in process:
-            p.join() #Wait for all the threads to finish
-        time.sleep(2)
-        if flag:
-            print("Grab")
-        else:
-            print("Drop")
+def moveJoint(qo,qf,action):
+    process = []
+    if qf[0]-qo[0] != 0:
+        joint1 = Move('First',qo[0],qf[0],tf)
+        joint1.start(),process.append(joint1)
+        print("Joint1 active")
+    if qf[1]-qo[1] != 0:
+        joint2 = Move('Second',qo[1],qf[1],tf)
+        joint2.start(),process.append(joint2)
+        print("Joint2 active")
+    if qf[2]-qo[2] != 0:
+        joint3 = Move('Third',qo[2],qf[2],tf)
+        joint3.start(),process.append(joint3)
+        print("joint3 active")
+    if qf[3]-qo[3] != 0:
+        joint4 = Move('Fourth',qo[3],qf[3],tf)
+        joint4.start(),process.append(joint4)
+        print("joint4 active")
+    if qf[4]-qo[4] != 0:
+        joint5 = Move('Fifth',qo[4],qf[4],tf)
+        joint5.start(),process.append(joint5)
+        print("Joint5 active")
+    check_target(process,action)   
 
+def check_target(process,action): #0 > gripper, 1 > Grab
+    for p in process:
+        p.join() #Wait for all the threads to finish
+    print("****Target reached****")
+    print(action)
+ 
 my_robot = kinematics(a1=2,a2=2,a3=6,a4=3) #Arguments are link1,link2,link3,link4
-def goTo(HOME_POS,TARGET,tf,H0_6):
+def goTo(HOME_POS,TARGET,tf,H0_6,action):
     main = trajectory_planner(HOME_POS[0],HOME_POS[1],HOME_POS[2],
                       TARGET[0],TARGET[1],TARGET[2]) #arguments are the intial position and the endeffector position
 
     qo,qf = main.getAngles(H0_6)
-    
-    #Lock all the threads in join movement occur synchronously
-    global t_lock
-    t_lock = t.Lock()
-    process = []
-    start = time.time()
-    joint1 = Move('First',qo[0],qf[0],tf)
-    joint2 = Move('Second',qo[1],qf[1],tf)
-    joint3 = Move('Third',qo[2],qf[2],tf)
-    joint4 = Move('Fourth',qo[3],qf[3],tf)
-    joint5 = Move('Fifth',qo[4],qf[4],tf)
-    #Starting the multiprocesses
-    joint1.start(),joint2.start(),joint3.start(),joint4.start(),joint5.start()
-    process.append(joint1),process.append(joint2),process.append(joint3),process.append(joint4),process.append(joint5)
-    flag = False
-
-    #Check whether the processes are finished then grab or release object
-    main.gripper(process,flag)
+    print(qo)
+    print(qf) 
+    moveJoint(qo,qf,action)
 
 if __name__ == '__main__':
+    
     HOME_POS = [11,0,2]
-    TARGET = [3,7,0]
-    t = 3
-    goTo(HOME_POS,TARGET,t)
-    sys.exit()
+    TARGET = [9,0,0]
+    tf = 5
+    action = 'grab' #'open'
+    H0_6 = [ #Orientation of the end effector
+        [0,1,0,0],
+        [0,0,1,0],
+        [1,0,0,0],
+        [0,0,0,1]
+    ]
+
+    goTo(HOME_POS,
+        TARGET,
+        tf,
+        H0_6,
+        action,
+        )
